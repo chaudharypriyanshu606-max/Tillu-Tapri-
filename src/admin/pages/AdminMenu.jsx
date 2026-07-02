@@ -12,11 +12,18 @@ import {
   addMenuItem,
   updateMenuItem,
 } from '../../lib/orderService';
+import { uploadImage } from '../../lib/cloudinary';
 import { categories } from '../../data/menuData';
 
 const BLANK = {
-  name: '', description: '', price: '', category: 'snacks',
-  isVeg: true, imageUrl: '', enabled: true,
+  name: '',
+  description: '',
+  price: '',
+  category: 'snacks',
+  isVeg: true,
+  imageUrl: '',
+  enabled: true,
+  rating: 4.5,
 };
 
 export default function AdminMenu() {
@@ -27,6 +34,9 @@ export default function AdminMenu() {
   const [saving,     setSaving]    = useState(false);
   const [filterCat,  setFilterCat] = useState('all');
   const [search,     setSearch]    = useState('');
+  const [uploading, setUploading] = useState(false);
+const [preview, setPreview] = useState('');
+
 
   // Real-time menu
   useEffect(() => {
@@ -37,7 +47,8 @@ export default function AdminMenu() {
   const openAdd = () => {
     setForm(BLANK);
     setEditId(null);
-    setModal(true);
+   setPreview('');
+setModal(true);
   };
 
   const openEdit = (item) => {
@@ -49,17 +60,46 @@ export default function AdminMenu() {
       isVeg:       item.isVeg       ?? true,
       imageUrl:    item.imageUrl    || '',
       enabled:     item.enabled     ?? true,
+      rating:      item.rating      ?? 4.5,
     });
     setEditId(item.id);
     setModal(true);
   };
+  const handleImageUpload = async (e) => {
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  try {
+    setUploading(true);
+
+    const imageUrl = await uploadImage(file);
+
+    setForm((prev) => ({
+      ...prev,
+      imageUrl,
+    }));
+
+    setPreview(imageUrl);
+
+  } catch (err) {
+    console.error(err);
+    alert("Image upload failed");
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleSave = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price) return;
     setSaving(true);
     try {
-      const data = { ...form, price: Number(form.price) };
+      const data = {
+  ...form,
+  price: Number(form.price),
+  rating: Number(form.rating),
+};
       if (editId) {
         await updateMenuItem(editId, data);
       } else {
@@ -158,9 +198,9 @@ export default function AdminMenu() {
           {/* Sheet */}
           <div className="relative bg-brand-card border-t border-brand-border rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto z-10">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display font-bold text-brand-text text-xl">
-                {editId ? 'Edit Item' : 'Add New Item'}
-              </h2>
+             <h2 className="font-display font-bold text-red-500 text-xl">
+  TEST 123
+</h2>
               <button
                 onClick={() => setModal(false)}
                 className="p-2 rounded-xl bg-brand-bg text-brand-muted hover:text-brand-text transition-colors"
@@ -221,14 +261,52 @@ export default function AdminMenu() {
               </div>
 
               <div>
-                <label className="text-brand-muted text-xs mb-1.5 block">Image URL (optional)</label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={form.imageUrl}
-                  onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
-                  className="input-field"
-                />
+                <div>
+                  <div>
+  <label className="text-brand-muted text-xs mb-1.5 block">
+    Rating
+  </label>
+
+  <input
+    type="number"
+    min="0"
+    max="5"
+    step="0.1"
+    value={form.rating}
+    onChange={(e) =>
+  setForm((f) => ({
+    ...f,
+    rating: e.target.value,
+  }))
+}
+    className="input-field"
+  />
+</div>
+  <label className="text-brand-muted text-xs mb-2 block">
+    Product Image
+  </label>
+
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handleImageUpload}
+    className="mb-3"
+  />
+
+  {uploading && (
+    <p className="text-brand-orange text-sm">
+      Uploading image...
+    </p>
+  )}
+
+  {preview && (
+    <img
+      src={preview}
+      alt="Preview"
+      className="w-40 h-40 object-cover rounded-xl border border-brand-border"
+    />
+  )}
+</div>
               </div>
 
               {/* Veg / Non-veg toggle */}

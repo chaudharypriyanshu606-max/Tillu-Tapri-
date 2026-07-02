@@ -7,10 +7,12 @@ import { useState } from 'react';
 import { FiPlus, FiMinus, FiStar } from 'react-icons/fi';
 import { FaFire } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
+import Toast from "./Toast";
 
 export default function FoodCard({ item }) {
   const { addItem, removeItem, updateQty, isInCart, getItemQty } = useCart();
   const [imgError, setImgError] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const qty = getItemQty(item.id);
 
   const handleAdd = () => addItem(item);
@@ -20,11 +22,18 @@ export default function FoodCard({ item }) {
   const fallbackImg = `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop`;
 
   return (
+  <>
+    <Toast
+      show={showToast}
+      message={`${item.name} is currently unavailable.`}
+      onClose={() => setShowToast(false)}
+    />
+
     <div className="card group flex flex-col overflow-hidden">
-      {/* Image */}
+      
       <div className="relative overflow-hidden h-44 md:h-48">
-        <img
-          src={imgError ? fallbackImg : item.image}
+       <img
+  src={item.imageUrl}
           alt={item.name}
           onError={() => setImgError(true)}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -95,15 +104,21 @@ export default function FoodCard({ item }) {
             )}
           </div>
 
-          {qty === 0 ? (
-            <button
-              onClick={handleAdd}
-              id={`add-to-cart-${item.id}`}
-              className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
-            >
-              <FiPlus size={13} /> Add
-            </button>
-          ) : (
+          {!item.enabled ? (
+  <button
+    onClick={() => setShowToast(true)}
+    className="bg-gray-600 text-white text-xs py-2 px-4 rounded-xl cursor-not-allowed"
+  >
+    Out of Stock
+  </button>
+  ) : qty === 0 ? (
+  <button
+    onClick={handleAdd}
+      id={`add-to-cart-${item.id}`}
+        className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5">
+    < FiPlus size={13} /> Add
+    </button>
+    ) : (
             <div className="flex items-center gap-2 bg-brand-bg border border-brand-orange rounded-xl overflow-hidden">
               <button
                 onClick={handleDecrease}
@@ -125,7 +140,8 @@ export default function FoodCard({ item }) {
             </div>
           )}
         </div>
-      </div>
+          </div>
     </div>
-  );
+  </>
+);
 }

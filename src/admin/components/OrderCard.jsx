@@ -82,7 +82,44 @@ export default function OrderCard({ order, whatsappNumber = '919876543210' }) {
       </div>
 
       {/* Delivery info */}
-      <div className="px-4 pb-3 flex items-start gap-1.5">
+      <div className="px-4 pb-3 space-y-2">
+
+  {/* Payment */}
+  <div className="flex items-center gap-2">
+    <span className="text-xs font-semibold text-brand-muted">
+      Payment:
+    </span>
+
+    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+      order.paymentMethod === "Cash on Delivery"
+        ? "bg-yellow-500/20 text-yellow-400"
+        : "bg-green-500/20 text-green-400"
+    }`}>
+      {order.paymentMethod === "Cash on Delivery"
+        ? "💵 Cash on Delivery"
+        : "📱 UPI"}
+    </span>
+  </div>
+
+  {/* Delivery */}
+  <div className="flex items-start gap-1.5">
+    <FiMapPin
+      className="text-brand-orange mt-0.5 flex-shrink-0"
+      size={13}
+    />
+
+    <p className="text-brand-muted text-sm">
+      {order.hostel}, Room {order.room}
+
+      {order.deliveryNote && (
+        <span className="block text-brand-muted/70 text-xs mt-0.5 italic">
+          "{order.deliveryNote}"
+        </span>
+      )}
+    </p>
+  
+
+</div>
         <FiMapPin className="text-brand-orange mt-0.5 flex-shrink-0" size={13} />
         <p className="text-brand-muted text-sm">
           {order.hostel}, Room {order.room}

@@ -3,6 +3,7 @@
 // User profile: order history, saved addresses, payment, settings
 // ============================================================
 
+
 import { useState, useEffect } from 'react';
 import {
   FiUser, FiPackage, FiMapPin, FiCreditCard, FiSettings,
@@ -32,6 +33,12 @@ const paymentMethods = [
 export default function Profile() {
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+  name: '',
+  email: '',
+  phone: '',
+});
 
 useEffect(() => {
   const unsubscribe = subscribeOrders((data) => {
@@ -40,18 +47,109 @@ useEffect(() => {
 });
   return unsubscribe;
 }, []);
+const [user, setUser] = useState(() => {
+  const savedUser = localStorage.getItem('tilluUser');
 
-  const user = {
-    name:   'Rahul Yadav',
-    email:  'rahulyadav@gmail.com',
-    phone:  '+91 98765-43210',
+  if (savedUser) {
+    return JSON.parse(savedUser);
+  }
+
+  return {
+    name: 'Rahul Yadav',
+    email: 'rahulyadav@gmail.com',
+    phone: '+91 98765-43210',
     avatar: 'RY',
     joined: 'Member since May 2024',
   };
+});
+
+useEffect(() => {
+  localStorage.setItem('tilluUser', JSON.stringify(user));
+}, [user]);
 
   return (
     <div className="min-h-screen animate-fade-in">
-      {/* Header */}
+  {isEditing && (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-brand-card p-6 rounded-xl w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4 text-white">
+          Edit Profile
+        </h2>
+
+        <input
+  type="text"
+  value={editForm.name}
+  onChange={(e) =>
+    setEditForm({
+      ...editForm,
+      name: e.target.value,
+    })
+  }
+  className="w-full p-3 mb-3 rounded bg-black text-white border border-gray-600"
+/>
+
+       <input
+  type="email"
+  value={editForm.email}
+  onChange={(e) =>
+    setEditForm({
+      ...editForm,
+      email: e.target.value,
+    })
+  }
+  className="w-full p-3 mb-3 rounded bg-black text-white border border-gray-600"
+/>
+
+       <input
+  type="text"
+  value={editForm.phone}
+  onChange={(e) =>
+    setEditForm({
+      ...editForm,
+      phone: e.target.value,
+    })
+  }
+  className="w-full p-3 mb-4 rounded bg-black text-white border border-gray-600"
+/>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsEditing(false)}
+            className="px-4 py-2 bg-red-500 rounded"
+          >
+            Cancel
+          </button>
+
+          <button
+           
+  onClick={() => {
+    console.log("EDIT FORM =", editForm);
+  const updatedUser = {
+    ...user,
+    name: editForm.name,
+    email: editForm.email,
+    phone: editForm.phone,
+  };
+
+  setUser(updatedUser);
+
+  localStorage.setItem(
+    'tilluUser',
+    JSON.stringify(updatedUser)
+  );
+
+  setIsEditing(false);
+}}
+  className="px-4 py-2 bg-green-500 rounded"
+>
+  Save
+</button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Header */}
       <div className="pt-20 pb-0 bg-brand-card border-b border-brand-border">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -79,9 +177,20 @@ useEffect(() => {
               <p className="text-brand-orange text-xs mt-1 font-medium">{user.joined}</p>
             </div>
 
-            <button className="btn-outline flex items-center gap-2 text-sm py-2.5 px-5">
-              <FiEdit2 size={14} /> Edit Profile
-            </button>
+           <button onClick={() => {
+  console.log("EDIT CLICKED");
+
+  setEditForm({
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+  });
+
+  setIsEditing(true);
+}}
+  className="btn-outline flex items-center gap-2 text-sm py-2.5 px-5">
+  <FiEdit2 size={14} /> Edit Profile
+</button>
           </div>
 
           {/* Tabs */}

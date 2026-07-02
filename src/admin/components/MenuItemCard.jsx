@@ -56,6 +56,13 @@ export default function MenuItemCard({ item, onEdit }) {
       {/* Controls */}
       <div className="flex flex-col items-end gap-2 flex-shrink-0">
         {/* Toggle */}
+        <p
+  className={`text-xs font-semibold ${
+    item.enabled ? 'text-green-400' : 'text-red-400'
+  }`}
+>
+  {item.enabled ? 'Available' : 'Out of Stock'}
+</p>
         <button
           onClick={handleToggle}
           disabled={toggling}

@@ -3,15 +3,17 @@
 // Full menu page with category filters, search, and food cards
 // ============================================================
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FiSearch, FiX, FiFilter } from 'react-icons/fi';
 import FoodCard from '../components/FoodCard';
-import { menuItems, categories } from '../data/menuData';
+import { categories } from '../data/menuData';
+import { subscribeMenu } from '../lib/orderService';
 
 export default function Menu() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery,    setSearchQuery]    = useState('');
   const [vegOnly,        setVegOnly]        = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
 
   // ── Filtered items ────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -25,6 +27,14 @@ export default function Menu() {
   }, [activeCategory, searchQuery, vegOnly]);
 
   const clearSearch = () => setSearchQuery('');
+  useEffect(() => {
+  const unsubscribe = subscribeMenu((data) => {
+    console.log("MENU FROM FIREBASE", data);
+    setMenuItems(data);
+  });
+
+  return unsubscribe;
+}, []);
 
   return (
     <div className="min-h-screen animate-fade-in">

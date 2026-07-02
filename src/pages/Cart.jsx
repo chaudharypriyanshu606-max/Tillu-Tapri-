@@ -188,7 +188,7 @@ function CheckoutForm({ onBack, onSuccess }) {
   });
   const [errors,  setErrors]  = useState({});
   const [loading, setLoading] = useState(false);
-
+  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
   const validate = () => {
     const e = {};
     if (!form.customerName.trim()) e.customerName = 'Name is required';
@@ -211,6 +211,7 @@ function CheckoutForm({ onBack, onSuccess }) {
         hostel:        form.hostel.trim(),
         room:          form.room.trim(),
         deliveryNote:  form.deliveryNote.trim(),
+        paymentMethod,
         items:         items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
         totalAmount:   total,
         subtotal:      total - deliveryCharge + discountAmount,
@@ -337,7 +338,31 @@ function CheckoutForm({ onBack, onSuccess }) {
               <FiAlertCircle size={16} /> {errors.submit}
             </div>
           )}
+          <div className="bg-brand-card border border-brand-border rounded-2xl p-5">
+  <h3 className="font-display font-bold text-brand-text mb-4">
+    Payment Method
+  </h3>
 
+  <label className="flex items-center gap-4 cursor-pointer rounded-xl border border-brand-border p-4 hover:border-brand-orange transition">
+    <input
+      type="radio"
+      name="payment"
+      value="Cash on Delivery"
+      checked={paymentMethod === "Cash on Delivery"}
+      onChange={(e) => setPaymentMethod(e.target.value)}
+      className="accent-orange-500"
+    />
+
+    <div>
+      <p className="font-semibold text-brand-text">
+        💵 Cash on Delivery
+      </p>
+      <p className="text-brand-muted text-sm">
+        Pay after receiving your order.
+      </p>
+    </div>
+  </label>
+</div>
           <button
             id="place-order-btn"
             type="submit"
@@ -352,7 +377,9 @@ function CheckoutForm({ onBack, onSuccess }) {
           </button>
 
           <p className="text-brand-muted text-xs text-center">
-            💵 Cash on Delivery only. No advance payment needed.
+            <p className="text-brand-muted text-xs text-center">
+  Choose your preferred payment method.
+</p>
           </p>
         </form>
       </div>
