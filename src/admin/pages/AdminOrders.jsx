@@ -35,8 +35,12 @@ export default function AdminOrders() {
 
   // Real-time orders
   useEffect(() => {
-    const filter = activeStatus === 'all' ? null : activeStatus;
+   const filter = activeStatus === 'all' ? null : activeStatus;
+
+console.log("Current tab:", activeStatus);
+console.log("Firestore filter:", filter);
     const unsub  = subscribeOrders(incoming => {
+      console.log("Orders received:", incoming);
       setOrders(incoming);
       // Notify on new pending orders
       const pendingCount = incoming.filter(o => o.status === 'pending').length;

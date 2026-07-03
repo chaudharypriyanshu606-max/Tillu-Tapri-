@@ -24,7 +24,7 @@ export default function Menu() {
       const matchesVeg    = !vegOnly || item.isVeg;
       return matchesCat && matchesSearch && matchesVeg;
     });
-  }, [activeCategory, searchQuery, vegOnly]);
+ }, [menuItems, activeCategory, searchQuery, vegOnly]);
 
   const clearSearch = () => setSearchQuery('');
   useEffect(() => {

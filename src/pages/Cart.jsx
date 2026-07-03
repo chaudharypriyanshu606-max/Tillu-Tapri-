@@ -183,9 +183,18 @@ function CartReview({ onProceed }) {
 function CheckoutForm({ onBack, onSuccess }) {
   const { items, total, discountAmount, deliveryCharge, coupon, clearCart } = useCart();
 
-  const [form, setForm] = useState({
-    customerName: '', phone: '', hostel: '', room: '', deliveryNote: '',
-  });
+  const [form, setForm] = useState(() => {
+  const profile = JSON.parse(localStorage.getItem("deliveryProfile") || "{}");
+  const user = JSON.parse(localStorage.getItem("tilluUser") || "{}");
+
+  return {
+    customerName: user.name || "",
+    phone: user.phone || "",
+    city: profile.city || "",
+    address: profile.address || "",
+    deliveryNote: "",
+  };
+});
   const [errors,  setErrors]  = useState({});
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
@@ -194,8 +203,11 @@ function CheckoutForm({ onBack, onSuccess }) {
     if (!form.customerName.trim()) e.customerName = 'Name is required';
     if (!form.phone.trim() || !/^\d{10}$/.test(form.phone.trim()))
       e.phone = 'Enter a valid 10-digit number';
-    if (!form.hostel.trim()) e.hostel = 'Hostel / PG name is required';
-    if (!form.room.trim())   e.room   = 'Room number is required';
+   if (!form.city.trim())
+  errs.city = "City is required";
+
+if (!form.address.trim())
+  errs.address = "Delivery Address is required";
     return e;
   };
 
@@ -208,8 +220,8 @@ function CheckoutForm({ onBack, onSuccess }) {
       const result = await placeOrder({
         customerName:  form.customerName.trim(),
         phone:         form.phone.trim(),
-        hostel:        form.hostel.trim(),
-        room:          form.room.trim(),
+        city: form.city.trim(),
+        address: form.address.trim(),
         deliveryNote:  form.deliveryNote.trim(),
         paymentMethod,
         items:         items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
@@ -296,13 +308,17 @@ function CheckoutForm({ onBack, onSuccess }) {
                   <input
                     id="hostel"
                     type="text"
-                    placeholder="Hostel / PG *"
-                    value={form.hostel}
-                    onChange={e => { setForm(f => ({ ...f, hostel: e.target.value })); setErrors(p => ({ ...p, hostel: undefined })); }}
-                    className={`input-field pl-11 ${errors.hostel ? 'border-red-500' : ''}`}
-                  />
+                    placeholder="City *"
+                    value={form.city}
+                    onChange={e => {
+  setForm(f => ({ ...f, city: e.target.value }));
+  setErrors(p => ({ ...p, city: undefined }));
+}}
+className={`input-field pl-11 ${errors.city ? 'border-red-500' : ''}`}
+/>
+                  
                 </div>
-                {errors.hostel && <p className="text-red-400 text-xs mt-1">{errors.hostel}</p>}
+                {errors.city && <p className="text-red-400 text-xs mt-1">{errors.city}</p>}
               </div>
               <div>
                 <div className="relative">
@@ -310,13 +326,14 @@ function CheckoutForm({ onBack, onSuccess }) {
                   <input
                     id="room"
                     type="text"
-                    placeholder="Room No. *"
-                    value={form.room}
-                    onChange={e => { setForm(f => ({ ...f, room: e.target.value })); setErrors(p => ({ ...p, room: undefined })); }}
-                    className={`input-field pl-11 ${errors.room ? 'border-red-500' : ''}`}
+                    placeholder="Delivery Address *"
+                    value={form.address}
+                    onChange={e => { setForm(f => ({ ...f, address: e.target.value }));
+                     setErrors(p => ({ ...p, address: undefined })); }}
+                    className={`input-field pl-11 ${errors.address ? 'border-red-500' : ''}`}
                   />
                 </div>
-                {errors.room && <p className="text-red-400 text-xs mt-1">{errors.room}</p>}
+                {errors.address && <p className="text-red-400 text-xs mt-1">{errors.address}</p>}
               </div>
             </div>
 

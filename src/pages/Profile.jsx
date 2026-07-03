@@ -20,10 +20,7 @@ const TABS = [
   { id: 'settings', label: 'Settings',         icon: FiSettings   },
 ];
 
-const savedAddresses = [
-  { id: 1, label: 'Home',   address: '12, Kidwai Nagar, Kanpur – 208011', isDefault: true  },
-  { id: 2, label: 'Office', address: 'Civil Lines, Kanpur – 208001',       isDefault: false },
-];
+
 
 const paymentMethods = [
   { id: 1, type: 'UPI',         detail: 'rahul@paytm',    isDefault: true  },
@@ -48,24 +45,43 @@ useEffect(() => {
   return unsubscribe;
 }, []);
 const [user, setUser] = useState(() => {
-  const savedUser = localStorage.getItem('tilluUser');
+  const savedUser = localStorage.getItem("tilluUser");
 
   if (savedUser) {
     return JSON.parse(savedUser);
   }
 
   return {
-    name: 'Rahul Yadav',
-    email: 'rahulyadav@gmail.com',
-    phone: '+91 98765-43210',
-    avatar: 'RY',
-    joined: 'Member since May 2024',
+    name: "Rahul Yadav",
+    email: "rahulyadav@gmail.com",
+    phone: "+91 98765-43210",
+    avatar: "RY",
+    joined: "Member since May 2024",
+  };
+});
+
+const [deliveryProfile, setDeliveryProfile] = useState(() => {
+  const saved = localStorage.getItem("deliveryProfile");
+
+  if (saved) {
+    return JSON.parse(saved);
+  }
+
+  return {
+    city: "",
+    address: "",
   };
 });
 
 useEffect(() => {
   localStorage.setItem('tilluUser', JSON.stringify(user));
 }, [user]);
+useEffect(() => {
+  localStorage.setItem(
+    "deliveryProfile",
+    JSON.stringify(deliveryProfile)
+  );
+}, [deliveryProfile]);
 
   return (
     <div className="min-h-screen animate-fade-in">
@@ -290,41 +306,63 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Saved Addresses */}
-            {activeTab === 'address' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-display font-bold text-brand-text text-xl">Saved Addresses</h2>
-                  <button className="btn-primary flex items-center gap-2 text-sm py-2.5 px-4">
-                    <FiPlus size={14} /> Add New
-                  </button>
-                </div>
-                <div className="flex flex-col gap-4">
-                  {savedAddresses.map(addr => (
-                    <div key={addr.id} className="card p-5 flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-brand-orange/10 flex items-center justify-center text-brand-orange flex-shrink-0">
-                        <FiMapPin size={18} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-display font-bold text-brand-text">{addr.label}</p>
-                          {addr.isDefault && (
-                            <span className="orange-badge text-[10px]">Default</span>
-                          )}
-                        </div>
-                        <p className="text-brand-muted text-sm mt-1">{addr.address}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="text-brand-muted hover:text-brand-orange transition-colors p-1">
-                          <FiEdit2 size={15} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+           {/* Delivery Details */}
+{activeTab === 'address' && (
+  <div>
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="font-display font-bold text-brand-text text-xl">
+        Delivery Details
+      </h2>
 
+      <button
+        onClick={() => {
+          const city = prompt(
+            "Enter City",
+            deliveryProfile.city
+          );
+
+          if (city === null) return;
+
+          const address = prompt(
+            "Enter Delivery Address (Hostel / PG / Apartment)",
+            deliveryProfile.address
+          );
+
+          if (address === null) return;
+
+          setDeliveryProfile({
+            city,
+            address,
+          });
+        }}
+        className="btn-primary flex items-center gap-2 text-sm py-2.5 px-4"
+      >
+        <FiEdit2 size={14} />
+        Edit
+      </button>
+    </div>
+
+    <div className="card p-6">
+      <div className="space-y-5">
+
+        <div>
+          <p className="text-brand-muted text-sm">City</p>
+          <p className="text-brand-text font-semibold text-lg">
+            {deliveryProfile.city || "Not Added"}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-brand-muted text-sm">Delivery Address</p>
+          <p className="text-brand-text font-semibold text-lg">
+            {deliveryProfile.address || "Not Added"}
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
             {/* Payment Methods */}
             {activeTab === 'payment' && (
               <div>
