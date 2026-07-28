@@ -18,7 +18,9 @@ import ServiceCard from '../components/ServiceCard';
 import { menuItems, testimonials } from '../data/menuData';
 
 // Featured items shown on home page
-const featured = menuItems.filter(i => i.isBestSeller).slice(0, 4);
+const featured = menuItems
+  .filter(item => item.isFeatured)
+  .slice(0, 4);
 
 // Why Choose Us reasons
 const whyUs = [

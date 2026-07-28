@@ -4,6 +4,10 @@
 // ============================================================
 
 import { createContext, useContext, useReducer, useEffect } from 'react';
+import { useAuth } from "./AuthContext";
+import { db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { useState } from "react";
 
 const CartContext = createContext(null);
 
@@ -78,6 +82,9 @@ export function CartProvider({ children }) {
     items: [],
     coupon: null,
   });
+  const { user } = useAuth();
+
+const [firstOrderDiscount, setFirstOrderDiscount] = useState(false);
 
   // Persist cart to localStorage
   useEffect(() => {
@@ -93,6 +100,23 @@ export function CartProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('tillu-cart', JSON.stringify(state));
   }, [state]);
+  useEffect(() => {
+  async function checkFirstOrder() {
+    if (!user) {
+      setFirstOrderDiscount(false);
+      return;
+    }
+
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      setFirstOrderDiscount(!userSnap.data().firstOrderUsed);
+    }
+  }
+
+  checkFirstOrder();
+}, [user]);
 
   // ── Derived values ──────────────────────────────────────────
   const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -103,15 +127,24 @@ export function CartProvider({ children }) {
   );
 
   let discountAmount = 0;
-  if (state.coupon) {
-    const coupon = VALID_COUPONS[state.coupon.code];
-    if (coupon) {
-      discountAmount =
-        coupon.type === 'percent'
-          ? Math.round((subtotal * coupon.discount) / 100)
-          : coupon.discount;
-    }
+
+// Automatic first order discount
+if (firstOrderDiscount) {
+  discountAmount = Math.round(subtotal * 0.20);
+}
+
+// Manual coupon (only if first-order discount is not active)
+else if (state.coupon) {
+  const coupon = VALID_COUPONS[state.coupon.code];
+
+  if (coupon) {
+    discountAmount =
+      coupon.type === "percent"
+        ? Math.round(subtotal * coupon.discount / 100)
+        : coupon.discount;
   }
+}
+  
 
   const deliveryCharge =
     subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGE;

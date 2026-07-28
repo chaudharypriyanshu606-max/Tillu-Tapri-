@@ -9,6 +9,7 @@ import {
   getDocs, deleteDoc, Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { getAuth } from "firebase/auth";
 
 // ── Collections ──────────────────────────────────────────────
 const ordersCol   = () => collection(db, 'orders');
@@ -17,6 +18,30 @@ const settingsDoc = () => doc(db, 'settings', 'shop');
 
 // ── Order ID generator ────────────────────────────────────────
 // Generates TT + 4-digit number, e.g. TT1024
+export function subscribeUserOrders(callback) {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    callback([]);
+    return () => {};
+  }
+
+  const q = query(
+    ordersCol(),
+    where("uid", "==", user.uid),
+    orderBy("createdAt", "desc")
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const orders = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    callback(orders);
+  });
+}
 export function generateOrderId() {
   const n = Math.floor(1000 + Math.random() * 9000);
   return `TT${n}`;
@@ -24,14 +49,27 @@ export function generateOrderId() {
 
 // ── Place Order (Customer) ────────────────────────────────────
 export async function placeOrder(orderData) {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
   const orderId = generateOrderId();
-  const docRef  = await addDoc(ordersCol(), {
+
+  const docRef = await addDoc(ordersCol(), {
     orderId,
+
     ...orderData,
-    status:    'pending',
+
+    uid: user?.uid || null,
+    email: user?.email || null,
+
+    status: "pending",
     createdAt: serverTimestamp(),
   });
-  return { id: docRef.id, orderId };
+
+  return {
+    id: docRef.id,
+    orderId,
+  };
 }
 
 // ── Real-time orders listener ─────────────────────────────────
@@ -140,7 +178,7 @@ export const STATUS_COLORS = {
 export function buildWhatsAppMessage(order, whatsappNumber) {
   const items = order.items?.map(i => `• ${i.quantity}x ${i.name}`).join('\n') || '';
   const msg = encodeURIComponent(
-    `🌶️ *Tillu Tapri*\n\nHi ${order.customerName}! Your order *${order.orderId}* is confirmed.\n\n${items}\n\n*Total: ₹${order.totalAmount}*\n\nDelivering to: ${order.hostel}, Room ${order.room} 🛵`
+    `🌶️ *Tillu Tapri*\n\nHi ${order.customerName}! Your order *${order.orderId}* is confirmed.\n\n${items}\n\n*Total: ₹${order.totalAmount}*\n\nDelivering to: ${order.city}, ${order.address}  🛵`
   );
   return `https://wa.me/${whatsappNumber}?text=${msg}`;
 }

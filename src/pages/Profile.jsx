@@ -10,8 +10,10 @@ import {
   FiLogOut, FiEdit2, FiPhone, FiMail, FiChevronRight,
   FiCheck, FiPlus,
 } from 'react-icons/fi';
-import { orderHistory } from '../data/menuData';
-import { subscribeOrders } from '../lib/orderService';
+
+import { subscribeUserOrders } from '../lib/orderService';
+import { useAuth } from '../context/AuthContext';
+import { FcGoogle } from 'react-icons/fc';
 
 const TABS = [
   { id: 'orders',   label: 'Order History',    icon: FiPackage    },
@@ -28,6 +30,33 @@ const paymentMethods = [
 ];
 
 export default function Profile() {
+  const { user, loginWithGoogle, logout } = useAuth();
+  console.log("AUTH USER:", user);
+  if (!user) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="card max-w-md w-full p-8 text-center">
+        <div className="text-5xl mb-4">🌶️</div>
+
+        <h1 className="font-display text-3xl font-bold text-brand-text mb-2">
+          Welcome to Tillu Tapri
+        </h1>
+
+        <p className="text-brand-muted mb-8">
+          Sign in to view your orders, save addresses and place orders faster.
+        </p>
+
+        <button
+          onClick={loginWithGoogle}
+          className="w-full flex items-center justify-center gap-3 bg-white text-black rounded-xl py-3 font-semibold hover:bg-gray-100 transition"
+        >
+          <FcGoogle size={22} />
+          Continue with Google
+        </button>
+      </div>
+    </div>
+  );
+}
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -38,13 +67,13 @@ export default function Profile() {
 });
 
 useEffect(() => {
-  const unsubscribe = subscribeOrders((data) => {
-  console.log("FIREBASE ORDERS", data);
-  setOrders(data);
-});
+  const unsubscribe = subscribeUserOrders((data) => {
+    setOrders(data);
+  });
+
   return unsubscribe;
 }, []);
-const [user, setUser] = useState(() => {
+const [profile, setProfile] = useState(() => {
   const savedUser = localStorage.getItem("tilluUser");
 
   if (savedUser) {
@@ -74,8 +103,8 @@ const [deliveryProfile, setDeliveryProfile] = useState(() => {
 });
 
 useEffect(() => {
-  localStorage.setItem('tilluUser', JSON.stringify(user));
-}, [user]);
+  localStorage.setItem('tilluUser', JSON.stringify(profile));
+}, [profile]);
 useEffect(() => {
   localStorage.setItem(
     "deliveryProfile",
@@ -147,7 +176,7 @@ useEffect(() => {
     phone: editForm.phone,
   };
 
-  setUser(updatedUser);
+  setProfile(updatedUser);
 
   localStorage.setItem(
     'tilluUser',
@@ -169,37 +198,46 @@ useEffect(() => {
       <div className="pt-20 pb-0 bg-brand-card border-b border-brand-border">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            {/* Avatar */}
-            <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-orange-gradient flex items-center justify-center text-white font-display font-black text-2xl shadow-orange">
-                {user.avatar}
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-brand-card flex items-center justify-center">
-                <FiCheck size={10} className="text-white" />
-              </div>
-            </div>
+           {/* Avatar */}
+<div className="relative">
+  {user.photoURL ? (
+    <img
+      src={user.photoURL}
+      alt="Profile"
+      className="w-20 h-20 rounded-2xl object-cover shadow-orange"
+    />
+  ) : (
+    <div className="w-20 h-20 rounded-2xl bg-orange-gradient flex items-center justify-center text-white font-display font-black text-2xl shadow-orange">
+      {user.displayName?.charAt(0)}
+    </div>
+  )}
+
+  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-brand-card flex items-center justify-center">
+    <FiCheck size={10} className="text-white" />
+  </div>
+</div>
 
             {/* Info */}
             <div className="flex-1">
-              <h1 className="font-display text-2xl font-black text-brand-text">{user.name}</h1>
+              <h1 className="font-display text-2xl font-black text-brand-text">{user.displayName}</h1>
               <div className="flex flex-wrap gap-4 mt-1">
                 <span className="text-brand-muted text-sm flex items-center gap-1.5">
                   <FiMail size={12} /> {user.email}
                 </span>
                 <span className="text-brand-muted text-sm flex items-center gap-1.5">
-                  <FiPhone size={12} /> {user.phone}
+                  <FiPhone size={12} /> {profile.phone || "Not Added"}
                 </span>
               </div>
-              <p className="text-brand-orange text-xs mt-1 font-medium">{user.joined}</p>
+              <p className="text-brand-orange text-xs mt-1 font-medium">Google Account</p>
             </div>
 
            <button onClick={() => {
   console.log("EDIT CLICKED");
 
   setEditForm({
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
+    name: profile.name,
+    email: profile.email,
+    phone: profile.phone,
   });
 
   setIsEditing(true);
@@ -230,7 +268,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Content */}
+          {/* Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 
@@ -254,10 +292,15 @@ useEffect(() => {
               </button>
             ))}
 
-            <button className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-all duration-200 mt-4">
-              <FiLogOut size={16} />
-              Logout
-            </button>
+                      <button
+            onClick={async () => {
+              await logout();
+            }}
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-all duration-200 mt-4"
+      >
+      <FiLogOut size={16} />
+    Logout
+    </button>
           </aside>
 
           {/* ── Main Content ──────────────────────────────── */}

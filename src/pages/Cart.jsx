@@ -13,6 +13,10 @@ import {
 import CartItem  from '../components/CartItem';
 import { useCart } from '../context/CartContext';
 import { placeOrder } from '../lib/orderService';
+import { useAuth } from "../context/AuthContext";
+import { db } from "../lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
+
 
 // ── Step 1: Cart Review ───────────────────────────────────────
 function CartReview({ onProceed }) {
@@ -147,11 +151,16 @@ function CartReview({ onProceed }) {
                   <span className="text-brand-text font-medium">₹{subtotal}</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-400">
-                    <span>Discount ({coupon?.label})</span>
-                    <span>- ₹{discountAmount}</span>
-                  </div>
-                )}
+                <div className="flex justify-between text-green-400">
+              <span>
+            {coupon
+            ? `Discount (${coupon.label})`
+            : "🎉 First Order Discount (20%)"}
+          </span>
+
+        <span>- ₹{discountAmount}</span>
+      </div>
+    )}
                 <div className="flex justify-between">
                   <span className="text-brand-muted">Delivery</span>
                   <span className={deliveryCharge === 0 ? 'text-green-400' : 'text-brand-text font-medium'}>
@@ -182,6 +191,7 @@ function CartReview({ onProceed }) {
 // ── Step 2: Checkout Form ─────────────────────────────────────
 function CheckoutForm({ onBack, onSuccess }) {
   const { items, total, discountAmount, deliveryCharge, coupon, clearCart } = useCart();
+  const { user } = useAuth();
 
   const [form, setForm] = useState(() => {
   const profile = JSON.parse(localStorage.getItem("deliveryProfile") || "{}");
@@ -204,10 +214,10 @@ function CheckoutForm({ onBack, onSuccess }) {
     if (!form.phone.trim() || !/^\d{10}$/.test(form.phone.trim()))
       e.phone = 'Enter a valid 10-digit number';
    if (!form.city.trim())
-  errs.city = "City is required";
+  e.city = "City is required";
 
 if (!form.address.trim())
-  errs.address = "Delivery Address is required";
+  e.address = "Delivery Address is required";
     return e;
   };
 
@@ -217,20 +227,33 @@ if (!form.address.trim())
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setLoading(true);
     try {
-      const result = await placeOrder({
-        customerName:  form.customerName.trim(),
-        phone:         form.phone.trim(),
-        city: form.city.trim(),
-        address: form.address.trim(),
-        deliveryNote:  form.deliveryNote.trim(),
-        paymentMethod,
-        items:         items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-        totalAmount:   total,
-        subtotal:      total - deliveryCharge + discountAmount,
-        discountAmount,
-        deliveryCharge,
-        couponCode:    coupon?.code || null,
-      });
+     const result = await placeOrder({
+  customerName: form.customerName.trim(),
+  phone: form.phone.trim(),
+
+ city: form.city.trim(),
+address: form.address.trim(),
+  deliveryNote: form.deliveryNote.trim(),
+
+  items: items.map(i => ({
+    id: i.id,
+    name: i.name,
+    price: i.price,
+    quantity: i.quantity,
+  })),
+
+  totalAmount: total,
+  subtotal: total - deliveryCharge + discountAmount,
+  discountAmount,
+  deliveryCharge,
+  couponCode: coupon?.code || null,
+  paymentMethod,
+});
+if (user) {
+  await updateDoc(doc(db, "users", user.uid), {
+    firstOrderUsed: true,
+  });
+}
       clearCart();
       onSuccess(result.orderId);
     } catch (err) {
