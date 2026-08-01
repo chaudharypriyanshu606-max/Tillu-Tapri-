@@ -15,7 +15,7 @@ import { subscribeUserOrders } from '../lib/orderService';
 import { useAuth } from '../context/AuthContext';
 import { FcGoogle } from 'react-icons/fc';
 
-const TABS = [
+const TABS = [   
   { id: 'orders',   label: 'Order History',    icon: FiPackage    },
   { id: 'address',  label: 'Saved Addresses',  icon: FiMapPin     },
   { id: 'payment',  label: 'Payment Methods',  icon: FiCreditCard },
@@ -74,7 +74,7 @@ useEffect(() => {
   return unsubscribe;
 }, []);
 const [profile, setProfile] = useState(() => {
-  const savedUser = localStorage.getItem("tilluUser");
+ const savedUser = localStorage.getItem("profileData");
 
   if (savedUser) {
     return JSON.parse(savedUser);
@@ -103,7 +103,11 @@ const [deliveryProfile, setDeliveryProfile] = useState(() => {
 });
 
 useEffect(() => {
-  localStorage.setItem('tilluUser', JSON.stringify(profile));
+  localStorage.setItem(
+  "profileData",
+  JSON.stringify(profile)
+);
+
 }, [profile]);
 useEffect(() => {
   localStorage.setItem(
@@ -179,9 +183,9 @@ useEffect(() => {
   setProfile(updatedUser);
 
   localStorage.setItem(
-    'tilluUser',
-    JSON.stringify(updatedUser)
-  );
+  "profileData",
+  JSON.stringify(updatedUser)
+);
 
   setIsEditing(false);
 }}

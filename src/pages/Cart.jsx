@@ -254,6 +254,22 @@ if (user) {
     firstOrderUsed: true,
   });
 }
+  // Save delivery details
+localStorage.setItem(
+  "deliveryProfile",
+  JSON.stringify({
+    city: form.city,
+    address: form.address,
+  })
+);
+
+localStorage.setItem(
+  "tilluUser",
+  JSON.stringify({
+    name: form.customerName,
+    phone: form.phone,
+  })
+);
       clearCart();
       onSuccess(result.orderId);
     } catch (err) {
